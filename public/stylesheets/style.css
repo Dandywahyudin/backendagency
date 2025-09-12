@@ -1,0 +1,106 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  margin: 0;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  color: #333;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: white;
+  padding: 40px;
+  border-radius: 15px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  color: #2c3e50;
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 2.5em;
+  font-weight: 300;
+}
+
+h2 {
+  color: #34495e;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 10px;
+  margin-top: 30px;
+}
+
+.api-info, .quick-start {
+  background: #f8f9fa;
+  padding: 25px;
+  border-radius: 10px;
+  margin: 20px 0;
+  border-left: 5px solid #3498db;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  background: white;
+  margin: 10px 0;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+li:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+strong {
+  color: #2980b9;
+  font-weight: 600;
+}
+
+code {
+  background: #2c3e50;
+  color: #ecf0f1;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
+ol {
+  padding-left: 20px;
+}
+
+ol li {
+  background: none;
+  box-shadow: none;
+  margin: 10px 0;
+  padding: 5px 0;
+}
+
+ol li:hover {
+  transform: none;
+}
+
+p {
+  margin-bottom: 15px;
+  text-align: center;
+  font-size: 1.1em;
+  color: #7f8c8d;
+}
+
+a {
+  color: #3498db;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #2980b9;
+  text-decoration: underline;
+}

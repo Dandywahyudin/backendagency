@@ -1,0 +1,39 @@
+extends layout
+
+block content
+  .container
+    h1= title
+    p= message
+    
+    .api-info
+      h2 Available API Endpoints
+      ul
+        li
+          strong GET /api/health
+          |  - Health check endpoint
+        li
+          strong GET /users
+          |  - Get all users
+        li
+          strong GET /users/:id
+          |  - Get user by ID
+        li
+          strong POST /users
+          |  - Create new user
+        li
+          strong PUT /users/:id
+          |  - Update user
+        li
+          strong DELETE /users/:id
+          |  - Delete user
+    
+    .quick-start
+      h2 Quick Start
+      p To get started with this API:
+      ol
+        li Install dependencies: 
+          code npm install
+        li Start development server: 
+          code npm run dev
+        li Visit: 
+          code http://localhost:3000/api/health
