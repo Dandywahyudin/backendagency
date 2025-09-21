@@ -6,19 +6,101 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  CUSTOMER
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  EWALLET
+}
+
+enum PaymentStatus {
+  WAITING_VERIFICATION
+  VERIFIED
+  REJECTED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
 }
 
 model User {
   id        Int      @id @default(autoincrement())
+  name      String
   email     String   @unique
-  name      String?
   password  String
+  role      Role     @default(CUSTOMER)
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-} 
+  updatedAt DateTime @default(now())
+
+  orders    Order[]
+  tasks     Task[]   @relation("StaffTasks")
+}
+
+model Package {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  price       Decimal   @db.Decimal(12, 2)
+  createdAt   DateTime  @default(now())
+
+  orders      Order[]
+}
+
+model Order {
+  id        Int         @id @default(autoincrement())
+  userId    Int
+  packageId Int
+  status    OrderStatus @default(PENDING_PAYMENT)
+  createdAt DateTime    @default(now())
+
+  user     User     @relation(fields: [userId], references: [id])
+  package  Package  @relation(fields: [packageId], references: [id])
+  payment  Payment?
+  tasks    Task[]
+}
+
+model Payment {
+  id        Int           @id @default(autoincrement())
+  orderId   Int           @unique
+  amount    Decimal        @db.Decimal(12, 2)
+  method    PaymentMethod  @default(BANK_TRANSFER)
+  proof     String?        // file path bukti transfer
+  status    PaymentStatus  @default(WAITING_VERIFICATION)
+  createdAt DateTime       @default(now())
+
+  order     Order          @relation(fields: [orderId], references: [id])
+}
+
+model Task {
+  id          Int        @id @default(autoincrement())
+  orderId     Int
+  title       String
+  description String?
+  status      TaskStatus @default(TODO)
+  assignedTo  Int?
+  createdAt   DateTime   @default(now())
+
+  order   Order @relation(fields: [orderId], references: [id])
+  staff   User? @relation("StaffTasks", fields: [assignedTo], references: [id])
+}
