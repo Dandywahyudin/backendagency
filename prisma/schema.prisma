@@ -54,7 +54,7 @@ model User {
   updatedAt DateTime @default(now())
 
   orders    Order[]
-  tasks     Task[]   @relation("StaffTasks")
+  adminTasks Task[]  @relation("AdminTasks")
 }
 
 model Package {
@@ -104,5 +104,5 @@ model Task {
   createdAt   DateTime   @default(now())
 
   order   Order @relation(fields: [orderId], references: [id])
-  staff   User? @relation("StaffTasks", fields: [assignedTo], references: [id])
+  admin   User? @relation("AdminTasks", fields: [assignedTo], references: [id])
 }
