@@ -1,3 +1,6 @@
+require('dotenv').config();
+console.log('JWT_SECRET loaded:', !!process.env.JWT_SECRET);
+console.log('JWT_EXPIRES_IN loaded:', process.env.JWT_EXPIRES_IN);
 const app = require('./app');
 const PORT = process.env.PORT || 3000;
 

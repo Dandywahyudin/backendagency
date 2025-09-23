@@ -60,10 +60,12 @@ model User {
 model Package {
   id          Int      @id @default(autoincrement())
   name        String
+  slug        String
   description String?
+  image       String?
   price       Decimal   @db.Decimal(12, 2)
   createdAt   DateTime  @default(now())
-
+  updatedAt   DateTime  @default(now())
   orders      Order[]
 }
 

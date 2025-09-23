@@ -1,10 +1,7 @@
 const bcrypt = require('bcrypt');
-const userRepository = require('../repositories/userRepository');
-const jwt = require('jsonwebtoken');
-const { findUserByEmail } = require('../repositories/userRepository');
-const { destroyToken } = require('../utils/tokenManager');
-
-const JWT_SECRET = process.env.JWT_SECRET || 'secretkey';
+const userModels = require('../models/userModels');
+const { findUserByEmail } = require('../models/userModels');
+const { generateToken, destroyToken } = require('../utils/jwt');
 
 const loginUser = async (email, password) => {
     const user = await findUserByEmail(email);
@@ -16,14 +13,13 @@ const loginUser = async (email, password) => {
     if (!isMatch) {
         throw new Error('Password salah');
     }
-
-    const token = jwt.sign({
+    
+    const token = generateToken({
         id: user.id,
         email: user.email,
         name: user.name,
         role: user.role
-    }, JWT_SECRET, { expiresIn: '1h' });
-
+    },);
     return { user, token };
 };
 
@@ -42,7 +38,7 @@ async function registerUser(data) {
     throw new Error('Name, email, dan password wajib diisi');
   }
 
-  const existingUser = await userRepository.findUserByEmail(data.email);
+  const existingUser = await userModels.findUserByEmail(data.email);
   if (existingUser) {
     throw new Error('Email sudah terdaftar');
   }
@@ -51,7 +47,7 @@ async function registerUser(data) {
   const hashedPassword = await bcrypt.hash(data.password, 10);
 
   // Simpan ke DB
-  const user = await userRepository.createUser({
+  const user = await userModels.createUser({
     name: data.name,
     email: data.email,
     password: hashedPassword,
@@ -61,4 +57,8 @@ async function registerUser(data) {
   return user;
 }
 console.log('loginUser export =', loginUser);
-module.exports = { registerUser, loginUser, logoutUser };
+module.exports = { 
+    registerUser, 
+    loginUser, 
+    logoutUser 
+  };

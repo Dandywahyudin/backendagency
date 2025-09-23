@@ -4,7 +4,7 @@ Aplikasi Express.js yang terstruktur dengan baik untuk Backend Agency, mengikuti
 
 ## 🚀 Features
 
-- ✅ Struktur folder yang terorganisir (MVC Pattern)
+- ✅ Struktur folder yang terorganisir
 - ✅ Environment configuration dengan dotenv
 - ✅ Error handling yang comprehensive
 - ✅ Logging middleware
@@ -88,19 +88,14 @@ backendagency/
 
 ### Environment Variables (.env)
 
-```env
 # Server Configuration
 PORT=3000
 NODE_ENV=development
 
-# Database Configuration
-DB_HOST=localhost
-DB_PORT=27017
-DB_NAME=backendagency
+DATABASE_URL="mysql://root@localhost:3306/backendAgency"
 
 # CORS Configuration
 CORS_ORIGIN=http://localhost:3000
-```
 
 ### Config Structure (src/config/index.js)
 
@@ -157,6 +152,3 @@ This project is licensed under the MIT License.
 - [ ] Authentication & Authorization (JWT)
 - [ ] Rate limiting
 - [ ] API documentation (Swagger)
-- [ ] Unit tests
-- [ ] Docker support
-- [ ] CI/CD pipeline

@@ -1,9 +1,10 @@
 const { token } = require('morgan');
-const userService = require('../services/userService');
+const authService = require('../services/authService');
 
-const register = async (req, res, next) => {
+//response for register
+const register = async (req, res) => {
   try {
-    const user = await userService.registerUser(req.body);
+    const user = await authService.registerUser(req.body);
 
     res.status(201).json({
       message: 'User created successfully',
@@ -23,16 +24,10 @@ const register = async (req, res, next) => {
 const login = async (req, res) => {
     try {
         const { email, password } = req.body;
-        const result = await userService.loginUser(email, password);
+        const result = await authService.loginUser(email, password);
         res.json({
             message: 'Login successful',
             token: result.token,
-            user: {
-                id: result.user.id,
-                email: result.user.email,
-                name: result.user.name,
-                role: result.user.role
-            }
         });
     } catch (error) {
         console.error('Login error:', error.message);
@@ -43,7 +38,7 @@ const login = async (req, res) => {
 const logout = async (req, res) => {
     try {
         const token = req.headers.authorization?.split(' ')[1];
-        const result = await userService.logoutUser(token);
+        const result = await authService.logoutUser(token);
     } catch (error) {
         console.error('Logout error:', error.message);
         return res.status(400).json({ error: error.message });
@@ -51,5 +46,5 @@ const logout = async (req, res) => {
     res.json({ message: 'Logout successful' });
 }
 
-console.log('login export =', login); //debug
+console.log('login export =', login);
 module.exports = { register, login, logout };
