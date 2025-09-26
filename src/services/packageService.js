@@ -1,3 +1,4 @@
+const { json } = require('express');
 const prisma = require('../config/database');
 const AppError = require('../errors/AppError');
 
@@ -10,6 +11,8 @@ const getAllPackages = async() => {
           name: true,
           description: true,
           price: true,
+          image: true,
+          features: true,
           createdAt: true,
           _count: {
             select: {
@@ -35,6 +38,7 @@ const getAllPackages = async() => {
           description: true,
           price: true,
           slug: true,
+          features: true,
           image: true,
           createdAt: true,
           orders: {
@@ -73,6 +77,16 @@ const getAllPackages = async() => {
 
 const createPackage = async (packageData, imageFile) => {
   const { name, description, price, slug } = packageData;
+  let { features } = packageData;
+
+  // jika features berupa string (FormData) parse jadi array
+  if (typeof features === 'string') {
+    try {
+      features = JSON.parse(features);
+    } catch (err) {
+      features = [];
+    }
+  }
 
   if (!name || !price) {
     throw new AppError('Nama dan harga package harus diisi', 400);
@@ -82,6 +96,10 @@ const createPackage = async (packageData, imageFile) => {
     throw new AppError('Harga tidak boleh negatif', 400);
   }
 
+  if (!features || !Array.isArray(features) || features.length === 0) {
+    throw new AppError('Harus ada fitur', 400);
+  }
+
   const finalSlug = slug || generateSlugFromName(name);
 
   let imageUrl = null;
@@ -89,26 +107,24 @@ const createPackage = async (packageData, imageFile) => {
     imageUrl = `/uploads/packages/${imageFile.filename}`;
   }
 
-  return await prisma.package.create({
+  const created = await prisma.package.create({
     data: {
       name: name.trim(),
       description: description?.trim(),
       price: parseFloat(price),
       slug: finalSlug.trim(),
+      features: features,
       image: imageUrl,
     },
-    select: {
-      id: true,
-      name: true,
-      description: true,
-      price: true,
-      slug: true,
-      image: true,
-      createdAt: true,
+  });
+
+  return await prisma.package.findUnique({
+    where: { id: created.id },
+    include: {
+      _count: { select: { orders: true } },
     },
   });
 };
-
 
   const generateSlugFromName = (name) => {
   return name
@@ -119,56 +135,72 @@ const createPackage = async (packageData, imageFile) => {
     .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
 };
 
-  const  updatePackage = async(id, packageData) =>  {
-    try {
-      const { name, description, price } = packageData;
+const updatePackage = async (id, packageData) => {
+  try {
+    let name, description, price, image, features;
 
-      // Check if package exists
-      const existingPackage = await prisma.package.findUnique({
-        where: { id: parseInt(id) }
-      });
+    // Jika pakai FormData (update dengan file upload)
+    if (typeof packageData.get === "function") {
+      name = packageData.get("name");
+      description = packageData.get("description");
+      price = packageData.get("price");
+      features = packageData.get("features");
+      image = packageData.get("image");
 
-      if (!existingPackage) {
-        throw new AppError('Package tidak ditemukan', 404);
+      // Jika features berupa string JSON, parse
+      if (features && typeof features === "string") {
+        features = JSON.parse(features);
       }
-
-      // Validation
-      if (price && price < 0) {
-        throw new AppError('Harga tidak boleh negatif', 400);
-      }
-
-      const updatedPackage = await prisma.package.update({
-        where: { id: parseInt(id) },
-        data: {
-          ...(name && { name: name.trim() }),
-          ...(description !== undefined && { description: description?.trim() }),
-          ...(price && { price: parseFloat(price) })
-        },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          price: true,
-          createdAt: true,
-          updatedAt: true
-        }
-      });
-
-      return updatedPackage;
-    } catch (error) {
-      if (error instanceof AppError) throw error;
-      
-      if (error.code === 'P2002') {
-        throw new AppError('Package dengan nama tersebut sudah ada', 400);
-      }
-      
-      if (error.code === 'P2025') {
-        throw new AppError('Package tidak ditemukan', 404);
-      }
-      
-      throw new AppError('Gagal mengupdate package', 500);
+    } else {
+      // Jika pakai JSON biasa
+      ({ name, description, price, features, image } = packageData);
     }
+
+    // Pastikan harga berupa angka
+    let parsedPrice =
+      price !== undefined && price !== null && price !== ""
+        ? parseFloat(price)
+        : null;
+
+    if (parsedPrice !== null && isNaN(parsedPrice)) {
+      throw new AppError("Harga harus berupa angka", 400);
+    }
+
+    if (parsedPrice !== null && parsedPrice < 0) {
+      throw new AppError("Harga tidak boleh negatif", 400);
+    }
+
+    // Cek apakah package ada
+    const existingPackage = await prisma.package.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    if (!existingPackage) {
+      throw new AppError("Package tidak ditemukan", 404);
+    }
+
+    // Update data
+    const updatedPackage = await prisma.package.update({
+      where: { id: parseInt(id) },
+      data: {
+        ...(name ? { name: name.trim() } : {}),
+        ...(description ? { description: description.trim() } : {}),
+        ...(parsedPrice !== null ? { price: parsedPrice } : {}),
+        ...(features != null ? { features } : {}),
+        ...(image ? { image } : {}),
+      },
+      include: {
+        _count: {
+          select: { orders: true },
+        },
+      },
+    });
+
+    return updatedPackage;
+  } catch (error) {
+    throw error;
   }
+};
 
   const deletePackage = async(id) => {
     try {

@@ -19,7 +19,7 @@ const router = express.Router();
 // Konfigurasi multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../uploads/packages')); // folder tujuan
+    cb(null, path.join(__dirname, '../uploads/packages'));
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + '-' + file.originalname); // nama file unik
