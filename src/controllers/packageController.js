@@ -13,7 +13,7 @@ const getAllPackages = async (req, res) => {
 }
 
 const getPackageById = async (req, res) => {
-  const package = await packageService.getPackageBySlug(req.params.id);
+  const package = await packageService.getPackageById(req.params.id);
   
   res.json({
     success: true,
@@ -39,14 +39,29 @@ const createPackage = async (req, res, next) => {
   }
 };
 
-const updatePackage = async (req, res) => {
-  const updatedPackage = await packageService.updatePackage(req.params.id, req.body);
-  
-  res.json({
-    success: true,
-    message: 'Package berhasil diupdate',
-    data: { package: updatedPackage }
-  });
+const updatePackage = async (req, res, next) => { // Gunakan 'next' untuk error handling
+  try {
+    const packageId = req.params.id;
+    const packageData = req.body;
+
+    // PENTING: Cek apakah ada file baru yang di-upload oleh multer
+    if (req.file) {
+      packageData.image = `/uploads/packages/${req.file.filename}`;
+    }
+
+    // Panggil service dengan data yang sudah LENGKAP
+    const updatedPackage = await packageService.updatePackage(packageId, packageData);
+    
+    res.json({
+      success: true,
+      message: 'Package berhasil diupdate',
+      data: updatedPackage // Service sudah mengembalikan data yang benar
+    });
+
+  } catch (error) {
+    // Jika terjadi error, teruskan ke middleware error handler
+    next(error); 
+  }
 };
 
 const deletePackage = async (req, res) => {

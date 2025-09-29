@@ -40,7 +40,7 @@ router.get('/admin/stats', authenticate, requireAdmin, getPackagesStats);
 router.post('/create', authenticate, requireAdmin, upload.single('image'), createPackage);
 router.get('/', authenticate, requireAdmin, getAllPackages);
 router.get('/:id', authenticate, requireAdmin, getPackageById);
-router.put('/update/:id', authenticate, requireAdmin, upload.single('image'), updatePackage);
+router.post('/update/:id', authenticate, requireAdmin, upload.single('image'), updatePackage);
 router.delete('/:id', authenticate, requireAdmin, deletePackage);
 
 module.exports = router;

@@ -1,6 +1,7 @@
 const { json } = require('express');
 const prisma = require('../config/database');
 const AppError = require('../errors/AppError');
+const fs = require('fs');
 
 const getAllPackages = async() => {
     try {
@@ -28,52 +29,57 @@ const getAllPackages = async() => {
     }
   }
 
-  const getPackageBySlug = async(slug) => {
-    try {
-      const package = await prisma.package.findFirst({
-        where: { slug },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          price: true,
-          slug: true,
-          features: true,
-          image: true,
-          createdAt: true,
-          orders: {
-            select: {
-              id: true,
-              status: true,
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true
-                }
-              },
-              createdAt: true
-            },
-            orderBy: { createdAt: 'desc' }
-          },
-          _count: {
-            select: {
-              orders: true
-            }
-          }
-        }
-      });
-
-      if (!package) {
-        throw new AppError('Package tidak ditemukan', 404);
-      }
-
-      return package;
-    } catch (error) {
-      if (error instanceof AppError) throw error;
-      throw new AppError('Gagal mengambil data package', 500);
+  const getPackageById = async (id) => {
+  try {
+    // Pastikan id berupa angka
+    const packageId = parseInt(id);
+    if (isNaN(packageId)) {
+      throw new AppError("ID package tidak valid", 400);
     }
+
+    const package = await prisma.package.findUnique({
+      where: { id: packageId },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        price: true,
+        slug: true,
+        features: true,
+        image: true,
+        createdAt: true,
+        orders: {
+          select: {
+            id: true,
+            status: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+            createdAt: true,
+          },
+          orderBy: { createdAt: "desc" },
+        },
+        _count: {
+          select: { orders: true },
+        },
+      },
+    });
+
+    if (!package) {
+      throw new AppError("Package tidak ditemukan", 404);
+    }
+
+    return package;
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError("Gagal mengambil data package", 500);
   }
+};
+
 
 const createPackage = async (packageData, imageFile) => {
   const { name, description, price, slug } = packageData;
@@ -137,70 +143,55 @@ const createPackage = async (packageData, imageFile) => {
 
 const updatePackage = async (id, packageData) => {
   try {
-    let name, description, price, image, features;
+    const { name, description, price, features, image } = packageData;
 
-    // Jika pakai FormData (update dengan file upload)
-    if (typeof packageData.get === "function") {
-      name = packageData.get("name");
-      description = packageData.get("description");
-      price = packageData.get("price");
-      features = packageData.get("features");
-      image = packageData.get("image");
-
-      // Jika features berupa string JSON, parse
-      if (features && typeof features === "string") {
-        features = JSON.parse(features);
-      }
-    } else {
-      // Jika pakai JSON biasa
-      ({ name, description, price, features, image } = packageData);
-    }
-
-    // Pastikan harga berupa angka
-    let parsedPrice =
-      price !== undefined && price !== null && price !== ""
-        ? parseFloat(price)
-        : null;
-
-    if (parsedPrice !== null && isNaN(parsedPrice)) {
-      throw new AppError("Harga harus berupa angka", 400);
-    }
-
-    if (parsedPrice !== null && parsedPrice < 0) {
-      throw new AppError("Harga tidak boleh negatif", 400);
-    }
-
-    // Cek apakah package ada
+    // Cek package yang ada untuk menghapus gambar lama
     const existingPackage = await prisma.package.findUnique({
       where: { id: parseInt(id) },
     });
-
     if (!existingPackage) {
       throw new AppError("Package tidak ditemukan", 404);
     }
 
-    // Update data
-    const updatedPackage = await prisma.package.update({
+    const dataToUpdate = {};
+    if (name) dataToUpdate.name = name;
+    if (description) dataToUpdate.description = description;
+    if (price) dataToUpdate.price = parseFloat(price);
+    
+    if (features) {
+      // Service menerima features yang sudah di-parse atau masih string
+      dataToUpdate.features = (typeof features === 'string') 
+        ? JSON.parse(features) 
+        : features;
+    }
+
+    // Jika controller mengirim path gambar baru
+    if (image) {
+      // Hapus gambar lama jika ada
+      if (existingPackage.image) {
+        const oldImagePath = `public${existingPackage.image}`; // Sesuaikan path folder public
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath);
+        }
+      }
+      dataToUpdate.image = image; // 'image' sudah berisi path dari controller
+    }
+
+    const updatedPackageResult = await prisma.package.update({
       where: { id: parseInt(id) },
-      data: {
-        ...(name ? { name: name.trim() } : {}),
-        ...(description ? { description: description.trim() } : {}),
-        ...(parsedPrice !== null ? { price: parsedPrice } : {}),
-        ...(features != null ? { features } : {}),
-        ...(image ? { image } : {}),
-      },
+      data: dataToUpdate,
       include: {
-        _count: {
-          select: { orders: true },
-        },
+        _count: { select: { orders: true } },
       },
     });
 
-    return updatedPackage;
+    return updatedPackageResult;
   } catch (error) {
+    // Error handling bisa diperkuat di sini atau di controller
     throw error;
   }
 };
+
 
   const deletePackage = async(id) => {
     try {
@@ -308,7 +299,7 @@ const updatePackage = async (id, packageData) => {
   }
 module.exports = {
     getAllPackages,
-    getPackageBySlug,
+    getPackageById,
     createPackage,
     updatePackage,
     deletePackage,
