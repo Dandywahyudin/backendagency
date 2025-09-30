@@ -5,5 +5,6 @@ const { authenticate } = require('../middleware/auth');
 
 // Endpoint: GET /api/orders/status?packageId=1
 router.get('/status', authenticate, orderController.getOrderStatus);
+router.get('/', orderController.getAllOrders);
 
 module.exports = router;

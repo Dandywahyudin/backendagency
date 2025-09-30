@@ -103,6 +103,8 @@ model Task {
   status      TaskStatus @default(TODO)
   assignedTo  Int?
   createdAt   DateTime   @default(now())
+  priority    String   @default("MEDIUM")
+  dueDate     DateTime?
 
   order   Order @relation(fields: [orderId], references: [id])
   admin   User? @relation("AdminTasks", fields: [assignedTo], references: [id])

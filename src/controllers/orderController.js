@@ -28,4 +28,17 @@ const getOrderStatus = async (req, res, next) => {
   }
 };
 
-module.exports = { getOrderStatus };
+const getAllOrders = async (req, res, next) => {
+  try {
+    const orders = await orderService.getAllOrders();
+    res.status(200).json({
+      status: 'success',
+      data: orders,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to get orders' });
+  }
+};
+
+module.exports = { getOrderStatus, getAllOrders };
